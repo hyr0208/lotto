@@ -43,6 +43,30 @@ npm run dev
 npm run build
 ```
 
+## 배포
+
+Jenkins + pm2 기반으로 자동 배포됩니다.
+
+**서버 사전 준비 (최초 1회)**
+
+```bash
+# pm2 전역 설치
+npm install -g pm2
+
+# Jenkins에서 NodeJS 플러그인 설치 후 'NodeJS' 이름으로 도구 등록
+```
+
+**파이프라인 흐름**
+
+```
+GitHub push → Jenkins 빌드 트리거
+  → npm ci
+  → npm run build
+  → pm2 serve dist 3007 --spa
+```
+
+**배포 URL**: https://lotto.yyyerin.co.kr
+
 ---
 
 Made with ❤️ by [yyyerin](https://github.com/yyyerin)
