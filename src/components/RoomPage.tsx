@@ -8,6 +8,8 @@ import {
   clickCell,
   replayGame,
   goToLobby,
+  leaveRoom,
+  setupPresence,
   timeoutCurrentPlayer,
   getPlayerId,
   getPlayerName,
@@ -51,7 +53,13 @@ export default function RoomPage() {
       }
     });
 
-    return () => unsubscribe();
+    // 자동 감지 (onDisconnect) 설정
+    const cancelPresence = setupPresence(roomCode);
+
+    return () => {
+      unsubscribe();
+      cancelPresence();
+    };
   }, [roomCode]);
 
   // 닉네임 없이 접근 시 입력 받기
@@ -162,6 +170,10 @@ export default function RoomPage() {
               roomCode={roomCode}
               room={room}
               onStartGame={() => startGame(roomCode)}
+              onLeave={async () => {
+                await leaveRoom(roomCode);
+                navigate("/");
+              }}
             />
           )}
           {room.phase === "playing" && room.cells && (
@@ -170,6 +182,10 @@ export default function RoomPage() {
               myPlayerId={myId}
               onCellClick={(cellId) => clickCell(roomCode, cellId)}
               onTimeout={() => timeoutCurrentPlayer(roomCode)}
+              onLeave={async () => {
+                await leaveRoom(roomCode);
+                navigate("/");
+              }}
             />
           )}
           {room.phase === "result" && room.loserId && (

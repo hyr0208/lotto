@@ -5,9 +5,15 @@ interface LobbyProps {
   roomCode: string;
   room: Room;
   onStartGame: () => void;
+  onLeave: () => void;
 }
 
-export default function Lobby({ roomCode, room, onStartGame }: LobbyProps) {
+export default function Lobby({
+  roomCode,
+  room,
+  onStartGame,
+  onLeave,
+}: LobbyProps) {
   const myId = getPlayerId();
   const isHost = room.hostId === myId;
   const players = Object.values(room.players || {}).sort(
@@ -165,6 +171,14 @@ export default function Lobby({ roomCode, room, onStartGame }: LobbyProps) {
           <li>커피잔이 나오면 그 사람이 커피를 삽니다 ☕</li>
         </ol>
       </div>
+
+      {/* 나가기 버튼 */}
+      <button
+        onClick={onLeave}
+        className="w-full py-2.5 text-sm text-gray-400 hover:text-red-500 transition"
+      >
+        🚪 방 나가기
+      </button>
     </div>
   );
 }

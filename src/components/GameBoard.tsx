@@ -8,6 +8,7 @@ interface GameBoardProps {
   myPlayerId: string;
   onCellClick: (cellId: number) => void;
   onTimeout: () => void;
+  onLeave: () => void;
 }
 
 export default function GameBoard({
@@ -15,6 +16,7 @@ export default function GameBoard({
   myPlayerId,
   onCellClick,
   onTimeout,
+  onLeave,
 }: GameBoardProps) {
   const [flipping, setFlipping] = useState<number | null>(null);
   const [countdown, setCountdown] = useState<number>(10);
@@ -191,6 +193,14 @@ export default function GameBoard({
           &nbsp;·&nbsp; 커피: {room.config.coffeeCount}개 숨어있음
         </p>
       )}
+
+      {/* 나가기 버튼 */}
+      <button
+        onClick={onLeave}
+        className="w-full py-2.5 text-sm text-gray-400 hover:text-red-500 transition mt-2"
+      >
+        🚪 게임 나가기
+      </button>
     </div>
   );
 }

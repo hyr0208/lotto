@@ -1,4 +1,14 @@
-import { ref, set, get, update, onValue, push, off } from "firebase/database";
+import {
+  ref,
+  set,
+  get,
+  update,
+  remove,
+  onValue,
+  onDisconnect,
+  push,
+  off,
+} from "firebase/database";
 import { db } from "./firebase";
 import type { Room, Cell, Player } from "./types";
 
@@ -204,4 +214,78 @@ export async function goToLobby(roomCode: string) {
     loserId: null,
     turnStartedAt: null,
   });
+}
+
+export async function leaveRoom(roomCode: string) {
+  const playerId = getPlayerId();
+  const snapshot = await get(ref(db, `rooms/${roomCode}`));
+  if (!snapshot.exists()) return;
+  const room = snapshot.val() as Room;
+
+  const players = Object.values(room.players || {}).sort(
+    (a, b) => a.order - b.order,
+  );
+  const remainingPlayers = players.filter((p) => p.id !== playerId);
+
+  // 마지막 사람이면 방 삭제
+  if (remainingPlayers.length === 0) {
+    await remove(ref(db, `rooms/${roomCode}`));
+    return;
+  }
+
+  // 플레이어 제거
+  await remove(ref(db, `rooms/${roomCode}/players/${playerId}`));
+
+  const updates: Record<string, unknown> = {};
+
+  // 호스트가 나가면 다음 사람에게 호스트 이전
+  if (room.hostId === playerId) {
+    updates["hostId"] = remainingPlayers[0].id;
+  }
+
+  // 게임 중이면 처리
+  if (room.phase === "playing") {
+    if (remainingPlayers.length < 2) {
+      // 1명만 남으면 로비로
+      updates["phase"] = "lobby";
+      updates["cells"] = [];
+      updates["currentPlayerIndex"] = 0;
+      updates["loserId"] = null;
+      updates["turnStartedAt"] = null;
+    } else {
+      // 현재 차례 플레이어가 나가면 다음 사람으로
+      const myIndex = players.findIndex((p) => p.id === playerId);
+      if (room.currentPlayerIndex >= remainingPlayers.length) {
+        updates["currentPlayerIndex"] = 0;
+        updates["turnStartedAt"] = Date.now();
+      } else if (myIndex <= room.currentPlayerIndex && myIndex !== -1) {
+        const newIndex = Math.max(0, room.currentPlayerIndex - 1);
+        updates["currentPlayerIndex"] =
+          newIndex >= remainingPlayers.length ? 0 : newIndex;
+        updates["turnStartedAt"] = Date.now();
+      }
+    }
+  }
+
+  // order 재정렬
+  for (let i = 0; i < remainingPlayers.length; i++) {
+    updates[`players/${remainingPlayers[i].id}/order`] = i;
+  }
+
+  if (Object.keys(updates).length > 0) {
+    await update(ref(db, `rooms/${roomCode}`), updates);
+  }
+}
+
+export function setupPresence(roomCode: string): () => void {
+  const playerId = getPlayerId();
+  const playerRef = ref(db, `rooms/${roomCode}/players/${playerId}`);
+
+  // 연결 끊기면 자동으로 플레이어 제거
+  onDisconnect(playerRef).remove();
+
+  // cleanup 함수 반환 (구독 해제 시 onDisconnect 취소)
+  return () => {
+    onDisconnect(playerRef).cancel();
+  };
 }
