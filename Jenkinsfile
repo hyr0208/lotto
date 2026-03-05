@@ -1,45 +1,63 @@
 pipeline {
     agent any
-
-    tools {
-        nodejs 'NodeJS'
-    }
-
+    
     environment {
-        APP_NAME = 'lotto'
-        APP_PORT = '3007'
+        DOCKER_IMAGE = 'lotto'
     }
-
+    
     stages {
-        stage('Install') {
+        stage('Checkout') {
             steps {
-                sh 'npm ci'
+                checkout scm
             }
         }
-
-        stage('Build') {
+        
+        stage('Build Docker Image') {
             steps {
-                sh 'npm run build'
+                script {
+                    sh '''
+                        docker build \
+                            -t ${DOCKER_IMAGE}:latest .
+                    '''
+                }
             }
         }
-
+        
         stage('Deploy') {
             steps {
-                sh '''
-                    pm2 delete $APP_NAME || true
-                    pm2 serve dist $APP_PORT --name $APP_NAME --spa
-                    pm2 save
-                '''
+                script {
+                    // Stop existing container
+                    sh 'docker stop lotto || true'
+                    sh 'docker rm lotto || true'
+                    
+                    // Run new container
+                    sh '''
+                        docker run -d \
+                            --name lotto \
+                            --restart unless-stopped \
+                            -p 3007:80 \
+                            ${DOCKER_IMAGE}:latest
+                    '''
+                }
+            }
+        }
+        
+        stage('Cleanup') {
+            steps {
+                script {
+                    // Remove dangling images
+                    sh 'docker image prune -f'
+                }
             }
         }
     }
-
+    
     post {
         success {
-            echo "배포 완료: http://lotto.yyyerin.co.kr"
+            echo '✅ Lotto 배포 성공! http://lotto.yyyerin.co.kr'
         }
         failure {
-            echo "배포 실패. 로그를 확인하세요."
+            echo '❌ 배포 실패'
         }
     }
 }
