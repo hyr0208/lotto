@@ -1,13 +1,4 @@
-import {
-  ref,
-  set,
-  get,
-  update,
-  onValue,
-  push,
-  off,
-  serverTimestamp,
-} from "firebase/database";
+import { ref, set, get, update, onValue, push, off } from "firebase/database";
 import { db } from "./firebase";
 import type { Room, Cell, Player } from "./types";
 
