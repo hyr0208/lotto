@@ -3,11 +3,16 @@ export interface Participant {
   name: string;
 }
 
-export interface DrawConfig {
-  title: string;
-  description: string;
-  participants: Participant[];
-  winnerCount: number;
+export interface Cell {
+  id: number;
+  hasCoffee: boolean;
+  revealed: boolean;
 }
 
-export type DrawPhase = 'setup' | 'drawing' | 'result';
+export interface GameConfig {
+  participants: Participant[];
+  gridSize: number;
+  coffeeCount: number;
+}
+
+export type GamePhase = 'setup' | 'playing' | 'result';

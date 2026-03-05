@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import type { DrawConfig, Participant } from '../types';
+import type { GameConfig, Participant } from '../types';
 
 interface SetupPanelProps {
-  config: DrawConfig;
-  onConfigChange: (config: DrawConfig) => void;
-  onStartDraw: () => void;
+  config: GameConfig;
+  onConfigChange: (config: GameConfig) => void;
+  onStartGame: () => void;
 }
 
-export default function SetupPanel({ config, onConfigChange, onStartDraw }: SetupPanelProps) {
+export default function SetupPanel({ config, onConfigChange, onStartGame }: SetupPanelProps) {
   const [newName, setNewName] = useState('');
 
   const addParticipant = () => {
@@ -29,62 +29,18 @@ export default function SetupPanel({ config, onConfigChange, onStartDraw }: Setu
     if (e.key === 'Enter') addParticipant();
   };
 
-  const handleBulkAdd = (text: string) => {
-    const names = text
-      .split(/[\n,]/)
-      .map((n) => n.trim())
-      .filter(Boolean);
-    if (names.length === 0) return;
-    const newParticipants: Participant[] = names.map((name) => ({
-      id: crypto.randomUUID(),
-      name,
-    }));
-    onConfigChange({ ...config, participants: [...config.participants, ...newParticipants] });
-  };
-
-  const canStart = config.participants.length >= 2 && config.winnerCount >= 1 && config.winnerCount < config.participants.length;
+  const canStart = config.participants.length >= 2;
 
   return (
     <div className="space-y-6">
-      {/* 뽑기 제목 */}
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1">뽑기 제목</label>
-        <input
-          type="text"
-          value={config.title}
-          onChange={(e) => onConfigChange({ ...config, title: e.target.value })}
-          placeholder="예: 오늘의 커피 당첨자"
-          className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
-        />
-      </div>
-
-      {/* 설명 */}
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1">설명 (선택)</label>
-        <input
-          type="text"
-          value={config.description}
-          onChange={(e) => onConfigChange({ ...config, description: e.target.value })}
-          placeholder="예: 오늘 커피는 이 분이 쏩니다!"
-          className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
-        />
-      </div>
-
-      {/* 당첨자 수 */}
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1">
-          당첨 인원 수
-        </label>
-        <input
-          type="number"
-          min={1}
-          max={Math.max(1, config.participants.length - 1)}
-          value={config.winnerCount}
-          onChange={(e) =>
-            onConfigChange({ ...config, winnerCount: Math.max(1, parseInt(e.target.value) || 1) })
-          }
-          className="w-24 border border-gray-300 rounded-xl px-4 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
-        />
+      {/* 타이틀 설명 */}
+      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-sm text-amber-800 leading-relaxed">
+        <p className="font-bold mb-1">게임 방법</p>
+        <ol className="list-decimal list-inside space-y-0.5 text-amber-700">
+          <li>참가자를 순서대로 추가하세요</li>
+          <li>순서대로 돌아가며 네모칸을 하나씩 선택</li>
+          <li>커피잔이 나오면 그 사람이 커피를 삽니다 ☕</li>
+        </ol>
       </div>
 
       {/* 참가자 추가 */}
@@ -98,34 +54,16 @@ export default function SetupPanel({ config, onConfigChange, onStartDraw }: Setu
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="이름 입력 후 Enter 또는 추가 버튼"
-            className="flex-1 border border-gray-300 rounded-xl px-4 py-2.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+            placeholder="이름 입력 후 Enter"
+            className="flex-1 border border-gray-300 rounded-xl px-4 py-2.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-400 transition"
           />
           <button
             onClick={addParticipant}
-            className="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold px-5 py-2.5 rounded-xl transition active:scale-95"
+            className="bg-amber-500 hover:bg-amber-600 text-white font-semibold px-5 py-2.5 rounded-xl transition active:scale-95"
           >
             추가
           </button>
         </div>
-
-        {/* 일괄 입력 */}
-        <details className="mt-2">
-          <summary className="text-sm text-indigo-500 cursor-pointer hover:text-indigo-700 select-none">
-            여러 명 한번에 추가하기
-          </summary>
-          <textarea
-            rows={4}
-            placeholder="이름을 줄바꿈 또는 쉼표로 구분해서 입력&#10;예: 김철수, 이영희&#10;박민준"
-            className="mt-2 w-full border border-gray-300 rounded-xl px-4 py-2.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition text-sm"
-            onBlur={(e) => {
-              if (e.target.value.trim()) {
-                handleBulkAdd(e.target.value);
-                e.target.value = '';
-              }
-            }}
-          />
-        </details>
       </div>
 
       {/* 참가자 목록 */}
@@ -133,7 +71,7 @@ export default function SetupPanel({ config, onConfigChange, onStartDraw }: Setu
         <div>
           <div className="flex items-center justify-between mb-2">
             <label className="text-sm font-semibold text-gray-700">
-              참가자 목록 ({config.participants.length}명)
+              참가자 순서 ({config.participants.length}명)
             </label>
             <button
               onClick={() => onConfigChange({ ...config, participants: [] })}
@@ -142,41 +80,69 @@ export default function SetupPanel({ config, onConfigChange, onStartDraw }: Setu
               전체 삭제
             </button>
           </div>
-          <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
-            {config.participants.map((p) => (
-              <span
+          <div className="space-y-1.5">
+            {config.participants.map((p, i) => (
+              <div
                 key={p.id}
-                className="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 text-sm font-medium px-3 py-1 rounded-full border border-indigo-200"
+                className="flex items-center justify-between bg-amber-50 border border-amber-100 rounded-xl px-4 py-2"
               >
-                {p.name}
+                <div className="flex items-center gap-3">
+                  <span className="w-6 h-6 bg-amber-400 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                    {i + 1}
+                  </span>
+                  <span className="text-gray-700 font-medium">{p.name}</span>
+                </div>
                 <button
                   onClick={() => removeParticipant(p.id)}
-                  className="text-indigo-400 hover:text-red-500 transition leading-none"
-                  aria-label={`${p.name} 제거`}
+                  className="text-gray-300 hover:text-red-400 transition text-lg leading-none"
                 >
                   ×
                 </button>
-              </span>
+              </div>
             ))}
           </div>
         </div>
       )}
 
+      {/* 판 크기 / 커피 수 설정 */}
+      <div className="flex gap-4">
+        <div className="flex-1">
+          <label className="block text-sm font-semibold text-gray-700 mb-1">칸 수</label>
+          <select
+            value={config.gridSize}
+            onChange={(e) => onConfigChange({ ...config, gridSize: parseInt(e.target.value) })}
+            className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-400 transition"
+          >
+            {[9, 12, 16, 20].map((n) => (
+              <option key={n} value={n}>{n}칸</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex-1">
+          <label className="block text-sm font-semibold text-gray-700 mb-1">커피 수</label>
+          <select
+            value={config.coffeeCount}
+            onChange={(e) => onConfigChange({ ...config, coffeeCount: parseInt(e.target.value) })}
+            className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-400 transition"
+          >
+            {[1, 2, 3].map((n) => (
+              <option key={n} value={n}>{n}개</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       {/* 시작 버튼 */}
       <button
-        onClick={onStartDraw}
+        onClick={onStartGame}
         disabled={!canStart}
         className={`w-full py-3.5 rounded-2xl text-white font-bold text-lg transition active:scale-95 ${
           canStart
-            ? 'bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 shadow-lg shadow-indigo-200'
+            ? 'bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 shadow-lg shadow-amber-200'
             : 'bg-gray-300 cursor-not-allowed'
         }`}
       >
-        {!canStart && config.participants.length < 2
-          ? '참가자를 2명 이상 추가하세요'
-          : !canStart
-          ? `당첨 인원은 ${config.participants.length - 1}명 이하여야 해요`
-          : '뽑기 시작!'}
+        {canStart ? '게임 시작! ☕' : '참가자를 2명 이상 추가하세요'}
       </button>
     </div>
   );
