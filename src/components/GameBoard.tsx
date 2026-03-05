@@ -1,18 +1,23 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Cell, Room, Player } from "../types";
+
+const TURN_TIMEOUT_MS = 10000; // 10초
 
 interface GameBoardProps {
   room: Room;
   myPlayerId: string;
   onCellClick: (cellId: number) => void;
+  onTimeout: () => void;
 }
 
 export default function GameBoard({
   room,
   myPlayerId,
   onCellClick,
+  onTimeout,
 }: GameBoardProps) {
   const [flipping, setFlipping] = useState<number | null>(null);
+  const [countdown, setCountdown] = useState<number>(10);
   const players = Object.values(room.players).sort(
     (a: Player, b: Player) => a.order - b.order,
   );
@@ -21,6 +26,38 @@ export default function GameBoard({
   const loser = room.loserId
     ? Object.values(room.players).find((p) => p.id === room.loserId)
     : null;
+
+  // 카운트다운 타이머
+  useEffect(() => {
+    if (!room.turnStartedAt || loser || room.phase !== "playing") {
+      setCountdown(10);
+      return;
+    }
+
+    const tick = () => {
+      const elapsed = Date.now() - room.turnStartedAt!;
+      const remaining = Math.max(
+        0,
+        Math.ceil((TURN_TIMEOUT_MS - elapsed) / 1000),
+      );
+      setCountdown(remaining);
+
+      if (remaining <= 0 && isMyTurn) {
+        onTimeout();
+      }
+    };
+
+    tick();
+    const interval = setInterval(tick, 200);
+    return () => clearInterval(interval);
+  }, [
+    room.turnStartedAt,
+    room.currentPlayerIndex,
+    loser,
+    room.phase,
+    isMyTurn,
+    onTimeout,
+  ]);
 
   const handleClick = (cell: Cell) => {
     if (cell.revealed || loser || !isMyTurn) return;
@@ -41,34 +78,56 @@ export default function GameBoard({
           : 5;
 
   const cells = room.cells || [];
+  const timerColor =
+    countdown <= 3
+      ? "text-red-500"
+      : countdown <= 5
+        ? "text-orange-500"
+        : "text-amber-600";
+  const timerBg =
+    countdown <= 3
+      ? "bg-red-50 border-red-300"
+      : countdown <= 5
+        ? "bg-orange-50 border-orange-300"
+        : "bg-amber-50 border-amber-200";
 
   return (
     <div className="space-y-5">
-      {/* 현재 차례 표시 */}
+      {/* 현재 차례 + 타이머 */}
       {!loser && (
         <div
-          className={`flex items-center justify-center gap-3 rounded-2xl py-3 px-4 border ${
+          className={`flex items-center justify-between rounded-2xl py-3 px-4 border ${
             isMyTurn
               ? "bg-green-50 border-green-300"
               : "bg-amber-50 border-amber-200"
           }`}
         >
-          <span className="text-2xl">{isMyTurn ? "👆" : "⏳"}</span>
-          <div>
-            <p
-              className={`text-xs font-semibold ${
-                isMyTurn ? "text-green-600" : "text-amber-600"
-              }`}
-            >
-              {isMyTurn ? "내 차례!" : "상대 차례"}
-            </p>
-            <p
-              className={`text-lg font-black ${
-                isMyTurn ? "text-green-800" : "text-amber-800"
-              }`}
-            >
-              {currentPlayer?.name}
-            </p>
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">{isMyTurn ? "👆" : "⏳"}</span>
+            <div>
+              <p
+                className={`text-xs font-semibold ${
+                  isMyTurn ? "text-green-600" : "text-amber-600"
+                }`}
+              >
+                {isMyTurn ? "내 차례!" : "상대 차례"}
+              </p>
+              <p
+                className={`text-lg font-black ${
+                  isMyTurn ? "text-green-800" : "text-amber-800"
+                }`}
+              >
+                {currentPlayer?.name}
+              </p>
+            </div>
+          </div>
+          {/* 타이머 */}
+          <div
+            className={`flex items-center justify-center w-12 h-12 rounded-full border-2 ${timerBg}`}
+          >
+            <span className={`text-xl font-black ${timerColor}`}>
+              {countdown}
+            </span>
           </div>
         </div>
       )}

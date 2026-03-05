@@ -8,6 +8,7 @@ import {
   clickCell,
   replayGame,
   goToLobby,
+  timeoutCurrentPlayer,
   getPlayerId,
   getPlayerName,
 } from "../roomService";
@@ -168,6 +169,7 @@ export default function RoomPage() {
               room={room}
               myPlayerId={myId}
               onCellClick={(cellId) => clickCell(roomCode, cellId)}
+              onTimeout={() => timeoutCurrentPlayer(roomCode)}
             />
           )}
           {room.phase === "result" && room.loserId && (

@@ -56,6 +56,7 @@ export async function createRoom(hostName: string): Promise<string> {
     cells: [],
     currentPlayerIndex: 0,
     loserId: null,
+    turnStartedAt: null,
     createdAt: Date.now(),
   };
 
@@ -125,6 +126,7 @@ export async function startGame(roomCode: string) {
     cells,
     currentPlayerIndex: 0,
     loserId: null,
+    turnStartedAt: Date.now(),
   });
 }
 
@@ -152,9 +154,11 @@ export async function clickCell(roomCode: string, cellId: number) {
   if (cell.hasCoffee) {
     updates["loserId"] = playerId;
     updates["phase"] = "result";
+    updates["turnStartedAt"] = null;
   } else {
     updates["currentPlayerIndex"] =
       (room.currentPlayerIndex + 1) % players.length;
+    updates["turnStartedAt"] = Date.now();
   }
 
   await update(ref(db, `rooms/${roomCode}`), updates);
@@ -172,6 +176,23 @@ export async function replayGame(roomCode: string) {
     cells,
     currentPlayerIndex: 0,
     loserId: null,
+    turnStartedAt: Date.now(),
+  });
+}
+
+export async function timeoutCurrentPlayer(roomCode: string) {
+  const snapshot = await get(ref(db, `rooms/${roomCode}`));
+  if (!snapshot.exists()) return;
+  const room = snapshot.val() as Room;
+  if (room.phase !== "playing") return;
+
+  const players = Object.values(room.players).sort((a, b) => a.order - b.order);
+  const currentPlayer = players[room.currentPlayerIndex];
+
+  await update(ref(db, `rooms/${roomCode}`), {
+    loserId: currentPlayer.id,
+    phase: "result",
+    turnStartedAt: null,
   });
 }
 
@@ -181,5 +202,6 @@ export async function goToLobby(roomCode: string) {
     cells: [],
     currentPlayerIndex: 0,
     loserId: null,
+    turnStartedAt: null,
   });
 }

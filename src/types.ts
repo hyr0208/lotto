@@ -23,6 +23,7 @@ export interface Room {
   cells: Cell[];
   currentPlayerIndex: number;
   loserId: string | null;
+  turnStartedAt: number | null;
   createdAt: number;
 }
 
