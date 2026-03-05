@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import type { GameConfig, Participant } from '../types';
+import { useState } from "react";
+import type { GameConfig, Participant } from "../types";
 
 interface SetupPanelProps {
   config: GameConfig;
@@ -7,15 +7,22 @@ interface SetupPanelProps {
   onStartGame: () => void;
 }
 
-export default function SetupPanel({ config, onConfigChange, onStartGame }: SetupPanelProps) {
-  const [newName, setNewName] = useState('');
+export default function SetupPanel({
+  config,
+  onConfigChange,
+  onStartGame,
+}: SetupPanelProps) {
+  const [newName, setNewName] = useState("");
 
   const addParticipant = () => {
     const trimmed = newName.trim();
     if (!trimmed) return;
     const participant: Participant = { id: crypto.randomUUID(), name: trimmed };
-    onConfigChange({ ...config, participants: [...config.participants, participant] });
-    setNewName('');
+    onConfigChange({
+      ...config,
+      participants: [...config.participants, participant],
+    });
+    setNewName("");
   };
 
   const removeParticipant = (id: string) => {
@@ -26,7 +33,7 @@ export default function SetupPanel({ config, onConfigChange, onStartGame }: Setu
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') addParticipant();
+    if (e.key === "Enter" && !e.nativeEvent.isComposing) addParticipant();
   };
 
   const canStart = config.participants.length >= 2;
@@ -107,26 +114,41 @@ export default function SetupPanel({ config, onConfigChange, onStartGame }: Setu
       {/* 판 크기 / 커피 수 설정 */}
       <div className="flex gap-4">
         <div className="flex-1">
-          <label className="block text-sm font-semibold text-gray-700 mb-1">칸 수</label>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">
+            칸 수
+          </label>
           <select
             value={config.gridSize}
-            onChange={(e) => onConfigChange({ ...config, gridSize: parseInt(e.target.value) })}
+            onChange={(e) =>
+              onConfigChange({ ...config, gridSize: parseInt(e.target.value) })
+            }
             className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-400 transition"
           >
             {[9, 12, 16, 20].map((n) => (
-              <option key={n} value={n}>{n}칸</option>
+              <option key={n} value={n}>
+                {n}칸
+              </option>
             ))}
           </select>
         </div>
         <div className="flex-1">
-          <label className="block text-sm font-semibold text-gray-700 mb-1">커피 수</label>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">
+            커피 수
+          </label>
           <select
             value={config.coffeeCount}
-            onChange={(e) => onConfigChange({ ...config, coffeeCount: parseInt(e.target.value) })}
+            onChange={(e) =>
+              onConfigChange({
+                ...config,
+                coffeeCount: parseInt(e.target.value),
+              })
+            }
             className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-400 transition"
           >
             {[1, 2, 3].map((n) => (
-              <option key={n} value={n}>{n}개</option>
+              <option key={n} value={n}>
+                {n}개
+              </option>
             ))}
           </select>
         </div>
@@ -138,11 +160,11 @@ export default function SetupPanel({ config, onConfigChange, onStartGame }: Setu
         disabled={!canStart}
         className={`w-full py-3.5 rounded-2xl text-white font-bold text-lg transition active:scale-95 ${
           canStart
-            ? 'bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 shadow-lg shadow-amber-200'
-            : 'bg-gray-300 cursor-not-allowed'
+            ? "bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 shadow-lg shadow-amber-200"
+            : "bg-gray-300 cursor-not-allowed"
         }`}
       >
-        {canStart ? '게임 시작! ☕' : '참가자를 2명 이상 추가하세요'}
+        {canStart ? "게임 시작! ☕" : "참가자를 2명 이상 추가하세요"}
       </button>
     </div>
   );
